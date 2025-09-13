@@ -36,18 +36,20 @@ async def fb_video_cmd(client, message: Message):
         caption = f"""
 🎬 <b>{meta.get('title')}</b>
 ⏳ Duration: {meta.get('duration')}
-🙋‍♂️ Requested by: {user_mention}
-🤖 Uploaded by: {BOT_NAME}
 
 👍 Likes: {meta.get('like_count')}
 💬 Comments: {meta.get('comment_count')}
 🔁 Shares: {meta.get('repost_count')}
 
-📅 Date: {meta.get('upload_date') or 'N/A'}
-⏰ Time: {meta.get('upload_time') or 'N/A'}
+📅 Uploaded Date: {meta.get('upload_date') or 'N/A'}
+⏰ Uploaded Time: {meta.get('upload_time') or 'N/A'}
+
 😊 Feeling: {meta.get('feeling')}
 📍 Location: {meta.get('location')}
 👤 Uploader: {meta.get('uploader')}
+
+🙋‍♂️ Requested by: {user_mention}
+🤖 Uploaded by: {BOT_NAME}
 """
 
         # Inline buttons (row type)
