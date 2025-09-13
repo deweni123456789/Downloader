@@ -25,7 +25,7 @@ async def fb_video_cmd(client, message: Message):
     msg = await message.reply_text("⏳ Downloading video...")
 
     try:
-        video_file = await download_fb_video(url)
+        video_file, meta = await download_fb_video(url)
         await client.send_document(
             chat_id=message.chat.id,
             document=video_file,
