@@ -2,14 +2,12 @@ import yt_dlp
 import tempfile
 from io import BytesIO
 import os
-from datetime import datetime
-
 
 async def download_fb_video(url: str):
     """
     Downloads a Facebook video using yt-dlp and returns:
     - BytesIO video file
-    - metadata dict
+    - metadata dict: title, duration, width, height, thumbnail
     """
     temp_dir = tempfile.gettempdir()
     output_path = os.path.join(temp_dir, "%(title)s.%(ext)s")
@@ -26,20 +24,20 @@ async def download_fb_video(url: str):
         info = ydl.extract_info(url, download=True)
         filename = ydl.prepare_filename(info)
 
-    # Load video into BytesIO
+    # Load video into memory
     with open(filename, "rb") as f:
         video_bytes = f.read()
 
     file = BytesIO(video_bytes)
     file.name = os.path.basename(filename)
 
-    # Thumbnail
+    # Thumbnail path
     thumb = None
     try:
         thumb_path = ydl.prepare_filename(info).rsplit(".", 1)[0] + ".jpg"
         if os.path.exists(thumb_path):
             thumb = thumb_path
-    except Exception:
+    except:
         pass
 
     # Format duration
@@ -50,36 +48,19 @@ async def download_fb_video(url: str):
         h, m = divmod(m, 60)
         return f"{h:02d}:{m:02d}:{s:02d}" if h else f"{m:02d}:{s:02d}"
 
-    # Metadata dictionary
+    # Minimal metadata
     meta = {
         "title": info.get("title", "Facebook Video"),
         "duration": format_duration(info.get("duration")),
         "width": info.get("width"),
         "height": info.get("height"),
-        "upload_date": None,
-        "upload_time": None,
-        "like_count": info.get("like_count", "N/A"),
-        "comment_count": info.get("comment_count", "N/A"),
-        "repost_count": info.get("repost_count", "N/A"),
-        "location": info.get("location", "N/A"),
-        "uploader": info.get("uploader", "N/A"),
-        "feeling": info.get("chapters", "N/A"),  # yt-dlp often doesn't provide "feeling"
         "thumb": thumb
     }
 
-    # Handle upload date/time
-    if info.get("upload_date"):
-        try:
-            dt = datetime.strptime(info["upload_date"], "%Y%m%d")
-            meta["upload_date"] = dt.strftime("%Y-%m-%d")
-            meta["upload_time"] = dt.strftime("%H:%M:%S")
-        except Exception:
-            pass
-
-    # Cleanup video file after loading
+    # Cleanup temp file
     try:
         os.remove(filename)
-    except Exception:
+    except:
         pass
 
     return file, meta
