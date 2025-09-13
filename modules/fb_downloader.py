@@ -2,13 +2,13 @@ import yt_dlp
 import tempfile
 from io import BytesIO
 import os
-from datetime import datetime
 
 async def download_fb_video(url: str):
     """
-    Downloads a Facebook video using yt-dlp and returns:
+    Downloads Facebook video using yt-dlp and returns:
     - BytesIO video file
-    - metadata dict
+    - metadata dict: title, duration, width, height, thumbnail
+    Raises Exception if download fails
     """
     temp_dir = tempfile.gettempdir()
     output_path = os.path.join(temp_dir, "%(title)s.%(ext)s")
@@ -22,12 +22,20 @@ async def download_fb_video(url: str):
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(url, download=True)
+        try:
+            info = ydl.extract_info(url, download=True)
+        except Exception as e:
+            raise Exception(f"yt-dlp failed: {e}")
+
         filename = ydl.prepare_filename(info)
+        if not os.path.exists(filename):
+            raise Exception("Video file not found after download!")
 
     # Load video
     with open(filename, "rb") as f:
         video_bytes = f.read()
+    if not video_bytes:
+        raise Exception("Downloaded video is empty!")
 
     file = BytesIO(video_bytes)
     file.name = os.path.basename(filename)
@@ -41,7 +49,7 @@ async def download_fb_video(url: str):
     except:
         pass
 
-    # Format duration
+    # Duration formatter
     def format_duration(sec):
         if not sec:
             return "N/A"
@@ -49,33 +57,18 @@ async def download_fb_video(url: str):
         h, m = divmod(m, 60)
         return f"{h:02d}:{m:02d}:{s:02d}" if h else f"{m:02d}:{s:02d}"
 
-    # Metadata
     meta = {
         "title": info.get("title", "Facebook Video"),
         "duration": format_duration(info.get("duration")),
         "width": info.get("width"),
         "height": info.get("height"),
-        "upload_date": None,
-        "upload_time": None,
-        "like_count": info.get("like_count", "N/A"),
-        "comment_count": info.get("comment_count", "N/A"),
-        "repost_count": info.get("repost_count", "N/A"),
-        "location": info.get("location", "N/A"),
-        "uploader": info.get("uploader", "N/A"),
-        "feeling": info.get("chapters", "N/A"),  # yt-dlp often doesn't give "feeling"
         "thumb": thumb
     }
 
-    # Format date/time
-    if info.get("upload_date"):
-        try:
-            dt = datetime.strptime(info["upload_date"], "%Y%m%d")
-            meta["upload_date"] = dt.strftime("%Y-%m-%d")
-            meta["upload_time"] = dt.strftime("%H:%M:%S")
-        except:
-            pass
-
-    # Cleanup video file
-    os.remove(filename)
+    # Cleanup
+    try:
+        os.remove(filename)
+    except:
+        pass
 
     return file, meta
