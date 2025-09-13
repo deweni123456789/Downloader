@@ -1,19 +1,23 @@
-import aiohttp
-import asyncio
+import yt_dlp
+import os
+import tempfile
 
 async def download_fb_video(url: str):
-    """
-    Facebook video downloader function using aiohttp.
-    Returns video bytes and filename.
-    """
-    # Note: Facebook video direct download is tricky, you may need third-party APIs
-    # Here's an example using hypothetical API
-    api_url = f"https://some-fb-api.example.com/download?url={url}"
+    # Create a temp file to save video
+    temp_dir = tempfile.gettempdir()
+    output_path = os.path.join(temp_dir, "%(title)s.%(ext)s")
 
-    async with aiohttp.ClientSession() as session:
-        async with session.get(api_url) as response:
-            if response.status != 200:
-                return None, None
-            data = await response.read()
-            filename = "fb_video.mp4"
-            return data, filename
+    ydl_opts = {
+        "outtmpl": output_path,
+        "format": "mp4",
+    }
+
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(url, download=True)
+        filename = ydl.prepare_filename(info)
+    
+    # Read video bytes
+    with open(filename, "rb") as f:
+        video_bytes = f.read()
+
+    return video_bytes, os.path.basename(filename)
