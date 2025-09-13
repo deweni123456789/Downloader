@@ -1,4 +1,4 @@
 pyrogram
 tgcrypto
 aiohttp
-yt-dlp
+yt-dlp==2025.09.12
