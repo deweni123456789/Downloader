@@ -1,26 +1,30 @@
-# Use an official Python image
 FROM python:3.12-slim
 
-# Set working directory
 WORKDIR /app
+
+# Install system build dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    gcc \
+    libffi-dev \
+    libssl-dev \
+    python3-dev \
+    cargo \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy project files
 COPY . /app
 
-# Upgrade pip first
+# Upgrade pip
 RUN python -m pip install --upgrade pip
 
-# Create a virtual environment
+# Create venv
 RUN python -m venv /opt/venv
 
-# Install dependencies inside the venv
+# Install Python dependencies inside venv
 RUN /opt/venv/bin/pip install --no-cache-dir -r requirements.txt
 
-# Set PATH to include venv binaries
+# Add venv to PATH
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Expose port if needed (optional)
-# EXPOSE 8080
-
-# Command to run your bot
 CMD ["python", "main.py"]
